@@ -1,0 +1,8 @@
+<%- include('../partials/header', { title: title, area: 'voter' }) %>
+<main class="narrow center">
+  <h1>Your votes are in</h1>
+  <p class="lead">Thank you for voting. Your choices were saved anonymously.</p>
+  <a class="btn primary" href="/">Done</a>
+</main>
+<script>setTimeout(function () { location.href = '/'; }, 10000);</script>
+<%- include('../partials/footer') %>

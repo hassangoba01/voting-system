@@ -1,0 +1,39 @@
+<%- include('../partials/header', { title: title, area: 'voter' }) %>
+<main class="wide">
+  <div class="ballot-head">
+    <div>
+      <h1>Your ballot</h1>
+      <p class="lead">Voting as <strong><%= voter.name %></strong> (<%= voter.student_id %>). Choose one candidate for every position.</p>
+    </div>
+    <form method="post" action="/leave"><button class="btn small ghost">Not you?</button></form>
+  </div>
+
+  <% if (!ballot.length) { %>
+    <p class="notice">There is nothing to vote on yet. Ask the election admin to add positions and candidates.</p>
+  <% } else { %>
+  <form method="post" action="/review">
+    <% ballot.forEach(pos => { %>
+      <fieldset class="position">
+        <legend><%= pos.name %></legend>
+        <div class="cands">
+          <% pos.candidates.forEach(c => { %>
+            <label class="cand">
+              <input type="radio" name="p_<%= pos.id %>" value="<%= c.id %>" required <%= String(selections[pos.id]) === String(c.id) ? 'checked' : '' %>>
+              <span class="cand-body">
+                <% if (c.photo) { %>
+                  <img src="/uploads/<%= c.photo %>" alt="" class="cand-photo">
+                <% } else { %>
+                  <span class="cand-photo cand-initials"><%= c.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() %></span>
+                <% } %>
+                <span class="cand-name"><%= c.name %></span>
+              </span>
+            </label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% }) %>
+    <div class="actions"><button class="btn primary big">Review my votes</button></div>
+  </form>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

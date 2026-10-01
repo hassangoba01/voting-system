@@ -1,0 +1,48 @@
+<%- include('../partials/header', { title: title, area: 'admin', active: 'voters' }) %>
+<main class="wide">
+  <h1>Voters</h1>
+  <p class="lead"><strong><%= voted %></strong> of <strong><%= total %></strong> eligible voters have voted.</p>
+
+  <form method="post" action="/admin/voters/upload" enctype="multipart/form-data" class="card inline-form wrap">
+    <div class="field">
+      <label for="vf">Voters list (.xlsx with columns "name" and "id")</label>
+      <input id="vf" type="file" name="file" accept=".xlsx,.xls" required>
+    </div>
+    <button class="btn primary">Upload list</button>
+    <p class="muted small-text full">Uploading again adds new students and updates names. It never changes who has already voted.</p>
+  </form>
+
+  <form method="get" action="/admin/voters" class="inline-form">
+    <input name="q" value="<%= q %>" placeholder="Search by name or ID" aria-label="Search voters">
+    <button class="btn small">Search</button>
+  </form>
+
+  <% if (!rows.length) { %>
+    <p class="muted"><%= total ? 'No voters match that search.' : 'No voters yet. Upload your Excel list above.' %></p>
+  <% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Student ID</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% rows.forEach(v => { %>
+          <tr>
+            <td><%= v.name %></td>
+            <td><%= v.student_id %></td>
+            <td><%= v.has_voted ? 'Voted' : 'Not yet' %></td>
+            <td>
+              <% if (!v.has_voted) { %>
+              <form method="post" action="/admin/voters/delete" onsubmit="return confirm('Remove this voter?')">
+                <input type="hidden" name="student_id" value="<%= v.student_id %>">
+                <button class="btn small danger">Remove</button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% if (rows.length === 300) { %><p class="muted small-text">Showing the first 300. Use search to find others.</p><% } %>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

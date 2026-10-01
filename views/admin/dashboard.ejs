@@ -1,0 +1,67 @@
+<%- include('../partials/header', { title: title, area: 'admin', active: 'results' }) %>
+<main class="wide">
+  <div class="stats">
+    <div class="stat">
+      <div class="muted">Turnout</div>
+      <div class="stat-num"><span id="voted">0</span> / <span id="total">0</span></div>
+      <div class="muted"><span id="pct">0</span>% have voted</div>
+    </div>
+    <div class="stat">
+      <div class="muted">Voting period</div>
+      <div class="stat-num" id="status"><%= votingOpen ? 'Open' : 'Closed' %></div>
+      <form method="post" action="/admin/voting/toggle">
+        <button class="btn <%= votingOpen ? 'danger' : 'primary' %> small"><%= votingOpen ? 'Close voting' : 'Open voting' %></button>
+      </form>
+    </div>
+    <div class="stat">
+      <div class="muted">Report</div>
+      <div class="stat-num">PDF</div>
+      <a class="btn small" href="/admin/export.pdf">Export results</a>
+    </div>
+  </div>
+
+  <p class="muted live">Live results refresh every 4 seconds. Suspended candidates are not counted.</p>
+  <div id="results"><p class="muted">Loading results...</p></div>
+</main>
+<script>
+  const box = document.getElementById('results');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const initials = n => esc(n.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase());
+
+  function render(d) {
+    document.getElementById('voted').textContent = d.turnout.voted;
+    document.getElementById('total').textContent = d.turnout.total;
+    document.getElementById('pct').textContent = d.turnout.percent;
+    if (!d.positions.length) {
+      box.innerHTML = '<p class="notice">No positions yet. Add positions and candidates to see results here.</p>';
+      return;
+    }
+    box.innerHTML = d.positions.map(p => `
+      <section class="res-pos">
+        <h2>${esc(p.name)} <span class="muted small-text">${p.totalVotes} vote${p.totalVotes === 1 ? '' : 's'}${p.tie ? ' · tie for first' : ''}</span></h2>
+        ${p.candidates.length ? p.candidates.map(c => `
+          <div class="res-row ${c.leader ? 'leader' : ''} ${c.suspended ? 'susp' : ''}">
+            ${c.photo ? `<img class="cand-photo sm" src="/uploads/${esc(c.photo)}" alt="">` : `<span class="cand-photo sm cand-initials">${initials(c.name)}</span>`}
+            <div class="res-main">
+              <div class="res-name">${esc(c.name)}
+                ${c.suspended ? '<span class="tag tag-susp">Suspended</span>' : ''}
+                ${c.leader ? `<span class="tag tag-lead">${p.tie ? 'Tied' : 'Leading'}</span>` : ''}
+              </div>
+              <div class="bar"><div class="bar-fill" style="width:${c.percent}%"></div></div>
+            </div>
+            <div class="res-num">${c.suspended ? '-' : c.votes}<span class="muted small-text">${c.suspended ? '' : ' (' + c.percent + '%)'}</span></div>
+          </div>`).join('') : '<p class="muted">No candidates yet.</p>'}
+      </section>`).join('');
+  }
+
+  async function load() {
+    try {
+      const r = await fetch('/admin/api/results');
+      if (r.status === 401) { location.href = '/admin/login'; return; }
+      render(await r.json());
+    } catch (e) { /* try again next tick */ }
+  }
+  load();
+  setInterval(load, 4000);
+</script>
+<%- include('../partials/footer') %>

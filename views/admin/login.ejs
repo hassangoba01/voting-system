@@ -1,0 +1,12 @@
+<%- include('../partials/header', { title: title, area: 'login' }) %>
+<main class="narrow">
+  <h1>Admin sign in</h1>
+  <form method="post" action="/admin/login" class="card stack">
+    <label for="u">Username</label>
+    <input id="u" name="username" autocomplete="username" required autofocus>
+    <label for="p">Password</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn primary">Sign in</button>
+  </form>
+</main>
+<%- include('../partials/footer') %>

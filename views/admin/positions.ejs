@@ -1,0 +1,31 @@
+<%- include('../partials/header', { title: title, area: 'admin', active: 'positions' }) %>
+<main class="wide">
+  <h1>Positions</h1>
+  <% if (votingOpen) { %><p class="notice">Voting is open, so positions are locked. Close voting to make changes.</p><% } %>
+
+  <form method="post" action="/admin/positions" class="card inline-form">
+    <label for="pn">New position</label>
+    <input id="pn" name="name" placeholder="e.g. President" required <%= votingOpen ? 'disabled' : '' %>>
+    <button class="btn primary" <%= votingOpen ? 'disabled' : '' %>>Add position</button>
+  </form>
+
+  <% if (!positions.length) { %>
+    <p class="muted">No positions yet. Add the first one above.</p>
+  <% } else { %>
+  <div class="list">
+    <% positions.forEach(p => { %>
+      <div class="list-row">
+        <form method="post" action="/admin/positions/<%= p.id %>/edit" class="inline-form grow">
+          <input name="name" value="<%= p.name %>" required aria-label="Position name" <%= votingOpen ? 'disabled' : '' %>>
+          <span class="muted"><%= p.candidate_count %> candidate<%= p.candidate_count === 1 ? '' : 's' %></span>
+          <button class="btn small" <%= votingOpen ? 'disabled' : '' %>>Rename</button>
+        </form>
+        <form method="post" action="/admin/positions/<%= p.id %>/delete" onsubmit="return confirm('Delete this position, its candidates and their votes? This cannot be undone.')">
+          <button class="btn small danger" <%= votingOpen ? 'disabled' : '' %>>Delete</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>

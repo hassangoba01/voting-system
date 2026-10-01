@@ -1,0 +1,22 @@
+<%- include('../partials/header', { title: title, area: 'voter' }) %>
+<main class="narrow">
+  <h1>Review your votes</h1>
+  <p class="lead">Check your choices. Votes cannot be changed after you submit.</p>
+  <ul class="review">
+    <% picks.forEach(p => { %>
+      <li>
+        <% if (p.candidate.photo) { %>
+          <img src="/uploads/<%= p.candidate.photo %>" alt="" class="cand-photo sm">
+        <% } else { %>
+          <span class="cand-photo sm cand-initials"><%= p.candidate.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() %></span>
+        <% } %>
+        <div><div class="muted"><%= p.position.name %></div><strong><%= p.candidate.name %></strong></div>
+      </li>
+    <% }) %>
+  </ul>
+  <div class="actions row">
+    <a class="btn ghost" href="/ballot">Change my choices</a>
+    <form method="post" action="/submit"><button class="btn primary big">Submit my votes</button></form>
+  </div>
+</main>
+<%- include('../partials/footer') %>

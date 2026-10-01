@@ -1,0 +1,15 @@
+<%- include('../partials/header', { title: title, area: 'voter' }) %>
+<main class="narrow">
+  <h1>Cast your vote</h1>
+  <% if (!votingOpen) { %>
+    <p class="notice">Voting is closed right now. Come back when the election is opened.</p>
+  <% } else { %>
+    <p class="lead">Enter your student ID to see your ballot. You can vote once.</p>
+  <% } %>
+  <form method="post" action="/login" class="card stack">
+    <label for="sid">Student ID</label>
+    <input id="sid" name="student_id" autocomplete="off" required <%= votingOpen ? 'autofocus' : 'disabled' %>>
+    <button class="btn primary" <%= votingOpen ? '' : 'disabled' %>>Continue to ballot</button>
+  </form>
+</main>
+<%- include('../partials/footer') %>

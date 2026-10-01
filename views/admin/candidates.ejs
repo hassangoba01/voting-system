@@ -1,0 +1,58 @@
+<%- include('../partials/header', { title: title, area: 'admin', active: 'candidates' }) %>
+<main class="wide">
+  <h1>Candidates</h1>
+  <% if (votingOpen) { %><p class="notice">Voting is open. You can suspend or reinstate candidates, but adding, editing and deleting are locked.</p><% } %>
+
+  <% if (!positions.length) { %>
+    <p class="notice">Add a position first, then come back to add candidates.</p>
+  <% } else { %>
+  <form method="post" action="/admin/candidates" enctype="multipart/form-data" class="card inline-form wrap">
+    <div class="field"><label for="cn">Name</label><input id="cn" name="name" required <%= votingOpen ? 'disabled' : '' %>></div>
+    <div class="field"><label for="cp">Position</label>
+      <select id="cp" name="position_id" required <%= votingOpen ? 'disabled' : '' %>>
+        <% positions.forEach(p => { %><option value="<%= p.id %>"><%= p.name %></option><% }) %>
+      </select>
+    </div>
+    <div class="field"><label for="cf">Photo (JPG or PNG, up to 5 MB)</label><input id="cf" type="file" name="photo" accept="image/jpeg,image/png" <%= votingOpen ? 'disabled' : '' %>></div>
+    <button class="btn primary" <%= votingOpen ? 'disabled' : '' %>>Add candidate</button>
+  </form>
+
+  <% positions.forEach(p => { %>
+    <section class="res-pos">
+      <h2><%= p.name %></h2>
+      <% if (!p.candidates.length) { %><p class="muted">No candidates yet.</p><% } %>
+      <% p.candidates.forEach(c => { %>
+        <div class="list-row cand-row <%= c.suspended ? 'susp' : '' %>">
+          <% if (c.photo) { %><img class="cand-photo sm" src="/uploads/<%= c.photo %>" alt="">
+          <% } else { %><span class="cand-photo sm cand-initials"><%= c.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() %></span><% } %>
+          <div class="grow">
+            <strong><%= c.name %></strong>
+            <% if (c.suspended) { %><span class="tag tag-susp">Suspended</span><% } %>
+          </div>
+          <form method="post" action="/admin/candidates/<%= c.id %>/suspend">
+            <button class="btn small <%= c.suspended ? 'primary' : '' %>"><%= c.suspended ? 'Reinstate' : 'Suspend' %></button>
+          </form>
+          <details class="edit">
+            <summary class="btn small <%= votingOpen ? 'disabled' : '' %>">Edit</summary>
+            <% if (!votingOpen) { %>
+            <form method="post" action="/admin/candidates/<%= c.id %>/edit" enctype="multipart/form-data" class="card stack">
+              <label>Name</label><input name="name" value="<%= c.name %>" required>
+              <label>Position</label>
+              <select name="position_id">
+                <% positions.forEach(op => { %><option value="<%= op.id %>" <%= op.id === c.position_id ? 'selected' : '' %>><%= op.name %></option><% }) %>
+              </select>
+              <label>Replace photo (optional)</label><input type="file" name="photo" accept="image/jpeg,image/png">
+              <button class="btn primary small">Save changes</button>
+            </form>
+            <% } %>
+          </details>
+          <form method="post" action="/admin/candidates/<%= c.id %>/delete" onsubmit="return confirm('Delete this candidate and their votes? Suspending keeps the votes and can be undone.')">
+            <button class="btn small danger" <%= votingOpen ? 'disabled' : '' %>>Delete</button>
+          </form>
+        </div>
+      <% }) %>
+    </section>
+  <% }) %>
+  <% } %>
+</main>
+<%- include('../partials/footer') %>
