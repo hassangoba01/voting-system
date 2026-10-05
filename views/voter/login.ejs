@@ -1,6 +1,13 @@
 <%- include('../partials/header', { title: title, area: 'voter' }) %>
 <main class="narrow">
-  <h1>Cast your vote</h1>
+  <div class="hero">
+    <div class="hero-logos">
+      <img class="logo-luanar" src="/img/luanar.jpg" alt="LUANAR logo">
+      <img class="logo-mei" src="/img/mei.png" alt="Malawi Engineering Institution logo">
+    </div>
+    <h1><%= electionName %></h1>
+    <p>Lilongwe University of Agriculture and Natural Resources</p>
+  </div>
   <% if (!votingOpen) { %>
     <p class="notice">Voting is closed right now. Come back when the election is opened.</p>
   <% } else { %>

@@ -12,12 +12,13 @@ const config = require('./config');
 const db = require('./db');
 
 const app = express();
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = config.UPLOADS_DIR;
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 const adminHash = bcrypt.hashSync(config.ADMIN_PASSWORD, 10);
 
 app.disable('x-powered-by');
+app.set('trust proxy', 1); // Railway sits behind a proxy
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: false }));
@@ -27,7 +28,7 @@ app.use(session({
   secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax' }
+  cookie: { httpOnly: true, sameSite: 'lax', secure: 'auto' }
 }));
 
 // ---------- helpers ----------
@@ -193,13 +194,25 @@ admin.get('/login', (req, res) => {
   if (req.session.isAdmin) return res.redirect('/admin');
   res.render('admin/login', { title: 'Admin sign in', area: 'login' });
 });
+// Slow down password guessing: 10 failed attempts per IP per 15 minutes.
+const loginFails = new Map();
+const WINDOW = 15 * 60 * 1000;
 admin.post('/login', (req, res) => {
+  const now = Date.now();
+  let rec = loginFails.get(req.ip);
+  if (!rec || now - rec.first > WINDOW) rec = { count: 0, first: now };
+  if (rec.count >= 10) {
+    flash(req, 'error', 'Too many failed attempts. Try again in 15 minutes.');
+    return res.redirect('/admin/login');
+  }
   const okUser = req.body.username === config.ADMIN_USERNAME;
   const okPass = bcrypt.compareSync(String(req.body.password || ''), adminHash);
   if (!okUser || !okPass) {
+    rec.count++; loginFails.set(req.ip, rec);
     flash(req, 'error', 'Wrong username or password.');
     return res.redirect('/admin/login');
   }
+  loginFails.delete(req.ip);
   req.session.isAdmin = true;
   res.redirect('/admin');
 });
@@ -397,11 +410,18 @@ admin.get('/export.pdf', (req, res) => {
   doc.pipe(res);
 
   const left = 50, width = 495;
-  doc.font('Helvetica-Bold').fontSize(22).fillColor('#1b2430').text(config.ELECTION_NAME, left, 50);
-  doc.font('Helvetica').fontSize(11).fillColor('#5b6673')
-    .text(`Results generated ${new Date().toLocaleString()}`)
-    .text(`Voting is currently ${db.isVotingOpen() ? 'open' : 'closed'}`);
-  doc.moveDown(0.8);
+  const imgDir = path.join(__dirname, 'public', 'img');
+  try {
+    doc.image(path.join(imgDir, 'luanar.jpg'), left, 40, { fit: [62, 62] });
+    doc.image(path.join(imgDir, 'mei.png'), left + width - 62, 40, { fit: [62, 62] });
+  } catch (e) { /* logos are optional */ }
+  doc.font('Helvetica-Bold').fontSize(18).fillColor('#1b2430')
+    .text(config.ELECTION_NAME, left + 70, 46, { width: width - 140, align: 'center' });
+  doc.font('Helvetica').fontSize(10).fillColor('#5b6673')
+    .text('Malawi Engineering Institution, LUANAR Chapter', left + 70, doc.y + 2, { width: width - 140, align: 'center' })
+    .text(`Results generated ${new Date().toLocaleString()} | Voting is ${db.isVotingOpen() ? 'open' : 'closed'}`, left + 70, doc.y + 2, { width: width - 140, align: 'center' });
+  doc.rect(left, 112, width, 3).fill('#178535');
+  doc.y = 130;
 
   const t = results.turnout;
   doc.font('Helvetica-Bold').fontSize(14).fillColor('#1b2430').text('Turnout', left, doc.y);
@@ -414,7 +434,7 @@ admin.get('/export.pdf', (req, res) => {
     const active = pos.candidates.filter(c => !c.suspended).sort((a, b) => b.votes - a.votes);
     if (doc.y + 40 + ROW > doc.page.height - 60) doc.addPage();
 
-    doc.font('Helvetica-Bold').fontSize(15).fillColor('#0b6b66').text(pos.name, left, doc.y);
+    doc.font('Helvetica-Bold').fontSize(15).fillColor('#178535').text(pos.name, left, doc.y);
     doc.font('Helvetica').fontSize(10).fillColor('#5b6673')
       .text(`${pos.totalVotes} vote${pos.totalVotes === 1 ? '' : 's'} counted`, left, doc.y);
     doc.moveDown(0.4);
@@ -466,5 +486,5 @@ app.use((req, res) => res.status(404).render('voter/error', { title: 'Not found'
 app.listen(config.PORT, () => {
   console.log(`\n  Voting system running`);
   console.log(`  Voters: http://localhost:${config.PORT}/`);
-  console.log(`  Admin:  http://localhost:${config.PORT}/admin  (user: ${config.ADMIN_USERNAME})\n`);
+  console.log(`  Admin:  http://localhost:${config.PORT}/admin`);
 });

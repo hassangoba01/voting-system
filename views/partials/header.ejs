@@ -5,12 +5,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %> | <%= electionName %></title>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body class="area-<%= area %>">
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="<%= area === 'voter' ? '/' : '/admin' %>"><%= electionName %></a>
+    <a class="brand" href="<%= area === 'voter' ? '/' : '/admin' %>">
+      <span class="brand-logos">
+        <img class="logo-luanar" src="/img/luanar.jpg" alt="LUANAR logo">
+        <img class="logo-mei" src="/img/mei.png" alt="Malawi Engineering Institution logo">
+      </span>
+      <span class="brand-text"><strong><%= electionName %></strong><span>Malawi Engineering Institution · LUANAR</span></span>
+    </a>
     <% if (area === 'admin') { %>
       <nav class="nav" aria-label="Admin">
         <a href="/admin" class="<%= active === 'results' ? 'on' : '' %>">Results</a>

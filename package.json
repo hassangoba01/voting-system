@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Local student voting system with voter and admin interfaces",
   "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js"
   },

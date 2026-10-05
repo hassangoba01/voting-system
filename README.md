@@ -43,7 +43,18 @@ To stop the server press `Ctrl + C` in the terminal.
 
 ## Changing settings
 
-Edit `config.js` to change the port, election name, admin username/password and session secret. Restart the server after editing.
+Locally, edit `config.js`. When deployed, set these as Railway **Variables** instead (they override `config.js`):
+
+| Variable | Purpose |
+| --- | --- |
+| `ADMIN_PASSWORD` | Admin password (required on Railway) |
+| `SESSION_SECRET` | Any long random text (required on Railway) |
+| `ADMIN_USERNAME` | Optional, defaults to `admin` |
+| `ELECTION_NAME` | Optional, shown in the page header and PDF |
+
+## Deploying to Railway
+
+See the steps in the chat. In short: push this folder to GitHub, create a Railway project from the repo, add the variables above, attach a **Volume** mounted at `/data`, and generate a domain. The Volume is essential: without it the database and photos are wiped on every redeploy. Keep the service at **one replica** (SQLite is a single file).
 
 ## Where data lives
 
